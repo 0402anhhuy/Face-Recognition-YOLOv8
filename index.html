@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="vi">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>FaceID — YOLOv8 Recognition</title>
+        <link rel="stylesheet" href="style.css" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap"
+            rel="stylesheet"
+        />
+    </head>
+    <body>
+        <div class="noise"></div>
+
+        <!-- HEADER -->
+        <header class="header">
+            <div class="header-left">
+                <div class="logo-mark">
+                    <span class="logo-bracket">[</span>
+                    <span class="logo-icon">◈</span>
+                    <span class="logo-bracket">]</span>
+                </div>
+                <div class="header-title">
+                    <h1>FaceID</h1>
+                    <span class="header-sub">YOLOv8 · MTCNN · FastAPI</span>
+                </div>
+            </div>
+            <div class="status-pill" id="statusPill">
+                <span class="status-dot"></span>
+                <span id="statusText">Chưa kết nối</span>
+            </div>
+        </header>
+
+        <!-- MAIN -->
+        <main class="main">
+            <!-- CONFIG PANEL -->
+            <section class="panel config-panel">
+                <div class="panel-label">01 — CẤU HÌNH SERVER</div>
+                <div class="config-row">
+                    <div class="input-group">
+                        <label for="serverUrl">Ngrok Public URL</label>
+                        <div class="input-wrapper">
+                            <input
+                                type="text"
+                                id="serverUrl"
+                                placeholder="https://xxxx-xx-xx.ngrok-free.app"
+                                autocomplete="off"
+                            />
+                            <span class="input-icon">↗</span>
+                        </div>
+                    </div>
+                    <button
+                        class="btn btn-secondary"
+                        id="testBtn"
+                        onclick="testConnection()"
+                    >
+                        <span>Kiểm tra kết nối</span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- UPLOAD PANEL -->
+            <section class="panel upload-panel">
+                <div class="panel-label">02 — CHỌN ẢNH</div>
+
+                <div class="upload-modes">
+                    <button
+                        class="mode-tab active"
+                        id="tabUpload"
+                        onclick="switchMode('upload')"
+                    >
+                        Upload ảnh
+                    </button>
+                    <button
+                        class="mode-tab"
+                        id="tabCamera"
+                        onclick="switchMode('camera')"
+                    >
+                        Chụp từ camera
+                    </button>
+                </div>
+
+                <!-- UPLOAD MODE -->
+                <div id="uploadMode">
+                    <div
+                        class="dropzone"
+                        id="dropzone"
+                        onclick="document.getElementById('fileInput').click()"
+                        ondragover="handleDragOver(event)"
+                        ondragleave="handleDragLeave(event)"
+                        ondrop="handleDrop(event)"
+                    >
+                        <div class="dropzone-inner">
+                            <div class="dropzone-icon">⬡</div>
+                            <p class="dropzone-text">Kéo thả ảnh vào đây</p>
+                            <p class="dropzone-hint">
+                                hoặc click để chọn file · JPG, PNG, WEBP
+                            </p>
+                        </div>
+                        <input
+                            type="file"
+                            id="fileInput"
+                            accept="image/*"
+                            style="display: none"
+                            onchange="handleFileSelect(event)"
+                        />
+                    </div>
+                </div>
+
+                <!-- CAMERA MODE -->
+                <div id="cameraMode" style="display: none">
+                    <div class="camera-container">
+                        <video
+                            id="cameraFeed"
+                            autoplay
+                            playsinline
+                            muted
+                        ></video>
+                        <div class="camera-overlay">
+                            <div class="scan-line"></div>
+                            <div class="corner tl"></div>
+                            <div class="corner tr"></div>
+                            <div class="corner bl"></div>
+                            <div class="corner br"></div>
+                        </div>
+                        <canvas
+                            id="cameraCanvas"
+                            style="display: none"
+                        ></canvas>
+                    </div>
+                    <div class="camera-controls">
+                        <button
+                            class="btn btn-secondary"
+                            id="startCamBtn"
+                            onclick="startCamera()"
+                        >
+                            ▶ Bật camera
+                        </button>
+                        <button
+                            class="btn btn-primary"
+                            id="captureBtn"
+                            onclick="captureFrame()"
+                            disabled
+                        >
+                            ◉ Chụp ảnh
+                        </button>
+                        <button
+                            class="btn btn-ghost"
+                            id="stopCamBtn"
+                            onclick="stopCamera()"
+                            disabled
+                        >
+                            ✕ Tắt camera
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- PREVIEW & RESULT -->
+            <section
+                class="panel result-panel"
+                id="resultPanel"
+                style="display: none"
+            >
+                <div class="panel-label">03 — KẾT QUẢ</div>
+
+                <div class="result-grid">
+                    <!-- INPUT IMAGE -->
+                    <div class="image-card">
+                        <div class="image-card-label">Ảnh gốc</div>
+                        <div class="image-card-body">
+                            <img id="inputPreview" src="" alt="Input" />
+                        </div>
+                    </div>
+
+                    <!-- ARROW -->
+                    <div class="result-arrow">
+                        <div class="arrow-track">
+                            <div class="arrow-fill" id="arrowFill"></div>
+                        </div>
+                        <span class="arrow-icon">→</span>
+                    </div>
+
+                    <!-- OUTPUT IMAGE -->
+                    <div class="image-card output-card">
+                        <div class="image-card-label">Kết quả nhận diện</div>
+                        <div class="image-card-body" id="outputBody">
+                            <div
+                                class="processing-placeholder"
+                                id="processingPlaceholder"
+                            >
+                                <div class="spinner"></div>
+                                <p>Đang xử lý...</p>
+                            </div>
+                            <img
+                                id="outputPreview"
+                                src=""
+                                alt="Output"
+                                style="display: none"
+                            />
+                        </div>
+                    </div>
+                </div>
+
+                <!-- STATS BAR -->
+                <div class="stats-bar" id="statsBar" style="display: none">
+                    <div class="stat-item">
+                        <span class="stat-label">Thời gian</span>
+                        <span class="stat-value" id="statTime">—</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <span class="stat-label">Khuôn mặt phát hiện</span>
+                        <span class="stat-value" id="statFaces">—</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <span class="stat-label">Ngưỡng tin cậy</span>
+                        <span class="stat-value">95%</span>
+                    </div>
+                    <div class="stat-divider"></div>
+                    <div class="stat-item">
+                        <span class="stat-label">Trạng thái</span>
+                        <span class="stat-value success" id="statStatus"
+                            >—</span
+                        >
+                    </div>
+                </div>
+
+                <!-- ACTIONS -->
+                <div class="result-actions">
+                    <button
+                        class="btn btn-primary"
+                        onclick="submitImage()"
+                        id="analyzeBtn"
+                    >
+                        <span class="btn-icon">◈</span> Nhận diện
+                    </button>
+                    <button
+                        class="btn btn-ghost"
+                        onclick="downloadResult()"
+                        id="downloadBtn"
+                        style="display: none"
+                    >
+                        ↓ Tải kết quả
+                    </button>
+                    <button class="btn btn-ghost" onclick="resetAll()">
+                        ↺ Thử lại
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <!-- TOAST -->
+        <div class="toast-container" id="toastContainer"></div>
+
+        <script src="app.js"></script>
+    </body>
+</html>
