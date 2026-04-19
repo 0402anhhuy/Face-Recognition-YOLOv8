@@ -1,100 +1,75 @@
-# FaceID — YOLOv8 Face Recognition UI
+# FaceID — YOLOv8 Face Recognition
 
-Giao diện web cho hệ thống nhận diện khuôn mặt sử dụng **MTCNN + YOLOv8 + FastAPI**
-
-## Kiến trúc hệ thống
+## System Architecture
 
 ```
 GitHub (UI source)
-      ↓ auto deploy
-Vercel (Frontend)                HF Spaces (Backend)
-https://faceid.vercel.app   ←→   https://username-space.hf.space
-  index.html / app.js              FastAPI + MTCNN + YOLOv8l
+      ↓
+    Vercel  ←→  HF Spaces
 ```
 
-## Cấu trúc thư mục
+## Project Structure
 
-```
+```text
 face-recognition-ui/
-├── index.html      # Giao diện chính
-├── style.css       # Stylesheet (theme tối, Industrial)
-├── app.js          # Logic gọi API, xử lý camera/upload
+├── index.html      
+├── style.css
+├── app.js
+└── README.md
+
+yolov8_face_recognition/
+├── weights/
+│   └── best.pt
+├── app.py
+├── Dockerfile
+├── requirements.txt
 └── README.md
 ```
 
-## Tính năng
+## Features
 
-- **Upload ảnh** — kéo thả hoặc click chọn file (JPG, PNG, WEBP)
-- **Chụp từ camera** — stream trực tiếp từ webcam, chụp frame để nhận diện
-- **Gọi API** — gửi ảnh tới `/predict_image` của FastAPI backend trên HF Spaces
-- **Hiển thị kết quả** — ảnh gốc và ảnh đã vẽ bounding box song song
-- **Thống kê** — thời gian xử lý, trạng thái kết nối
-- **Tải kết quả** — download ảnh kết quả về máy
+- **Image Upload** — Drag-and-drop or file picker support (JPG, PNG, WEBP)
+- **API Integration** — Sends data to the `/predict_image` endpoint on HF Spaces
+- **Side-by-Side Comparison** — View original and annotated images (bounding boxes) simultaneously
+- **Real-time Statistics** — Displays processing time and connection status
+- **Download Results** — Export the processed image with detection results
 
-## Cách dùng
+## Usage Guide
 
-### 1. Mở trang web
+### 1. Access the Web App
+- Visit the live site on Vercel: [https://face-recognition-yolov8.vercel.app/](https://face-recognition-yolov8.vercel.app/)
 
-Truy cập trực tiếp tại URL Vercel — không cần cài đặt gì thêm.
+### 2. Face Recognition Process
+- Select an image by **dragging and dropping** it into the upload zone.
+- Click **Recognize**.
+- The result will appear on the right side showing the **bounding box + name + confidence score**.
 
-URL backend HF Spaces đã được điền sẵn, trang sẽ tự động kiểm tra kết nối khi load.
-
-### 2. Nhận diện khuôn mặt
-
-1. Chọn ảnh bằng cách **kéo thả** vào vùng upload, hoặc **chụp từ camera**
-2. Bấm **Nhận diện**
-3. Kết quả hiển thị ngay bên phải — bounding box + tên + độ tin cậy
-4. Bấm **Tải kết quả** để lưu ảnh về máy
-
-### 3. Đổi server (tuỳ chọn)
-
-Nếu muốn dùng backend khác (ví dụ ngrok local), nhập URL vào ô **Server URL** và bấm **Kiểm tra kết nối**. URL sẽ được lưu vào `localStorage` cho lần sau.
-
-## Backend API
-
-Endpoint được sử dụng:
-
-| Method | Path | Mô tả |
-|--------|------|-------|
-| `GET`  | `/` | Health check, trả về JSON |
-| `POST` | `/predict_image` | Upload ảnh (`multipart/form-data`, field `file`), trả về ảnh JPEG đã annotate |
-
-Backend được deploy trên **Hugging Face Spaces** (Docker + FastAPI). Xem repo backend để biết thêm chi tiết.
-
-## Deploy
+## Deployment
 
 ### Frontend (Vercel)
-
+To deploy the UI
 ```bash
-# 1. Fork / clone repo này
-git clone https://github.com/YOUR_USERNAME/face-recognition-ui
-
-# 2. Kết nối repo với Vercel tại vercel.com
-# 3. Vercel tự động deploy mỗi khi push lên main
+git clone https://github.com/0402anhhuy/Face-Recognition-YOLOv8
 ```
 
-### Cập nhật URL backend
-
-Trong `app.js`, sửa dòng:
-
-```javascript
-const HF_DEFAULT_URL = 'https://YOUR_USERNAME-YOUR_SPACE_NAME.hf.space';
+### Backend (Hugging Face Spaces)
+To clone and explore the Docker-based backend
+```bash
+git lfs install
+git clone https://huggingface.co/spaces/0402anhhuy/FaceID-Backend
 ```
-
-## Lưu ý
-
-- **Cold start:** HF Spaces free có thể mất 30–60s cho request đầu tiên sau thời gian không hoạt động
-- **CPU only:** Backend chạy trên CPU, inference mất khoảng 3–10s mỗi ảnh
-- **Ngưỡng tin cậy:** `CONF_THRESHOLD = 0.95` được cấu hình phía backend
-- **CORS:** Backend đã cấu hình CORS cho phép Vercel gọi vào
 
 ## Tech Stack
 
-| Layer | Công nghệ |
-|-------|-----------|
-| Frontend | Vanilla HTML / CSS / JavaScript |
-| Font | Syne (display) + Space Mono (monospace) |
-| Backend | FastAPI + Uvicorn |
-| Model | YOLOv8l + MTCNN |
-| Frontend hosting | Vercel |
-| Backend hosting | Hugging Face Spaces (Docker) |
+| Layer | Technology |
+| :--- | :--- |
+| **Frontend** | Vanilla HTML / CSS / JavaScript |
+| **Backend** | FastAPI + Uvicorn |
+| **Model** | YOLOv8l + MTCNN |
+| **Frontend Hosting** | Vercel |
+| **Backend Hosting** | Hugging Face Spaces (Docker) |
+
+## Training & Notebook
+
+Detailed information regarding model training, data preprocessing with MTCNN, and GPU-based inference testing can be found here:
+- **Kaggle Notebook:** [Face Recognition YOLOv8](https://www.kaggle.com/code/trananhhuy0402/face-recognition-yolov8)
