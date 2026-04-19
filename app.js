@@ -14,7 +14,7 @@ const state = {
 };
 
 // ── INIT ───────────────────────────────────────
-const HF_DEFAULT_URL = 'https://YOUR_USERNAME-YOUR_SPACE_NAME.hf.space';
+const HF_DEFAULT_URL = 'https://anhhuy0402-yolov8-face-recognition.hf.space';
 
 window.addEventListener('DOMContentLoaded', () => {
     // Ưu tiên: localStorage → HF default
@@ -256,7 +256,7 @@ async function submitImage() {
 
         const res = await fetch(`${url}/predict_image`, {
             method: 'POST',
-            headers: { 'ngrok-skip-browser-warning': '1' },
+            headers: {},
             body: formData,
             signal: AbortSignal.timeout(30000),
         });
